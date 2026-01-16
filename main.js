@@ -6,6 +6,7 @@ class Block {
     this.timestamp = timestamp;
     this.data = data;
     this.previousHash = previousHash;
+    this.nonce = 0;
     this.hash = this.calculateHash();
   }
 
@@ -14,14 +15,27 @@ class Block {
       this.index +
         this.previousHash +
         this.timestamp +
-        JSON.stringify(this.data)
+        JSON.stringify(this.data) +
+        this.nonce,
     ).toString();
+  }
+
+  mineBlock(difficulty) {
+    while (
+      this.hash.substring(0, difficulty) !== Array(difficulty + 1).join("0")
+    ) {
+      this.nonce++;
+      this.hash = this.calculateHash();
+    }
+
+    console.log("Block mined:", this.hash);
   }
 }
 
 class Blockchain {
   constructor() {
     this.chain = [this.createGenesisBlock()];
+    this.difficulty = 3;
   }
 
   createGenesisBlock() {
@@ -34,7 +48,7 @@ class Blockchain {
 
   addBlock(newBlock) {
     newBlock.previousHash = this.getLatestBlock().hash;
-    newBlock.hash = newBlock.calculateHash();
+    newBlock.mineBlock(this.difficulty);
     return this.chain.push(newBlock);
   }
 
@@ -45,22 +59,16 @@ class Blockchain {
 
       if (currentBlock.hash !== currentBlock.calculateHash()) return false;
 
-      if (currentBlock.previousHash !== previousBlock.hash) return false; // how does this check if blocks are properly linked?
-
+      if (currentBlock.previousHash !== previousBlock.hash) return false;
     }
     return true;
   }
 }
 
 const sajveeCoin = new Blockchain();
+console.log("Mining block 1...");
 sajveeCoin.addBlock(new Block(1, "02/01/2026", { amount: 8 }));
+console.log("Mining block 2...");
 sajveeCoin.addBlock(new Block(2, "02/01/2026", { amount: 4 }));
+console.log("Mining block 3...");
 sajveeCoin.addBlock(new Block(3, "04/01/2026", { amount: 15 }));
-console.log("blockchain is valid:", sajveeCoin.isValid());
-
-sajveeCoin.chain[1].data = { amount: 100 };
-sajveeCoin.chain[1].hash = sajveeCoin.chain[1].calculateHash(); 
-
-console.log("blockchain is valid:", sajveeCoin.isValid());
-
-// console.log(JSON.stringify(sajveeCoin, null, 4));
