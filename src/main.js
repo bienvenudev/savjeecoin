@@ -1,10 +1,11 @@
 const SHA256 = require("crypto-js/sha256");
 
 class Transaction {
-  constructor(fromAddress, toAddress, amount) {
+  constructor(fromAddress, toAddress, amount, fee = 0) {
     this.fromAddress = fromAddress;
     this.toAddress = toAddress;
     this.amount = amount;
+    this.fee = fee;
   }
 }
 
@@ -56,15 +57,33 @@ class Blockchain {
   }
 
   minePendingTransactions(miningRewardAddress) {
+    if (this.pendingTransactions.length === 0) {
+      console.log("❌ No transactions to mine! (Empty block rejected)");
+      return false;
+    }
+
+     if (this.pendingTransactions.length === 1 && this.pendingTransactions[0].fromAddress === null) {
+    console.log("⚠️  Mining empty block (only reward transaction) - Missing out on fees!");
+  }
+
+    let totalFees = 0;
+    for (const trans of this.pendingTransactions) {
+      totalFees += trans.fee || 0;
+    }
+
     let block = new Block(Date.now(), this.pendingTransactions);
     block.mineBlock(this.difficulty);
 
-    console.log("Block successfully mined!");
+    console.log(
+      `✅ Block mined! Earned: ${this.miningReward + totalFees} (${this.miningReward} reward + ${totalFees} fees)`,
+    );
     this.chain.push(block);
 
     this.pendingTransactions = [
-      new Transaction(null, miningRewardAddress, this.miningReward),
+      new Transaction(null, miningRewardAddress, this.miningReward + totalFees),
     ];
+
+    return true;
   }
 
   createTransaction(transaction) {
@@ -75,48 +94,91 @@ class Blockchain {
     let balance = 0;
 
     for (const block of this.chain) {
-      for (const trans of block.transactions) {
-        if (trans.fromAddress === address) {
-          balance -= trans.amount;
+      for (const tx of block.transactions) {
+        if (tx.fromAddress === address) {
+          balance -= tx.amount;
         }
 
-        if (trans.toAddress === address) {
-          balance += trans.amount;
+        if (tx.toAddress === address) {
+          balance += tx.amount;
         }
       }
     }
     return balance;
   }
-
-  isChainValid() {
-    for (let i = 1; i < this.chain.length; i++) {
-      const currentBlock = this.chain[i];
-      const previousBlock = this.chain[i - 1];
-
-      if (currentBlock.hash !== currentBlock.calculateHash()) return false;
-
-      if (currentBlock.previousHash !== previousBlock.hash) return false;
-    }
-    return true;
-  }
 }
 
-const sajveeCoin = new Blockchain();
-sajveeCoin.createTransaction(new Transaction("address1", "address2", 100));
-sajveeCoin.createTransaction(new Transaction("address2", "address1", 50));
+console.log("=== SCENARIO 1: Greedy Miner (tries to mine empty blocks) ===\n");
 
-console.log("\n Starting the miner...");
-sajveeCoin.minePendingTransactions("bens-address");
+const greedyCoin = new Blockchain();
+greedyCoin.createTransaction(new Transaction("user1", "user2", 50, 5));
 
-console.log(
-  "\nBalance of ben is",
-  sajveeCoin.getBalanceofAddress("bens-address"),
-);
-
-console.log("\n Starting the miner again...");
-sajveeCoin.minePendingTransactions("bens-address");
+console.log("Greedy miner tries to mine with no transactions:");
+greedyCoin.minePendingTransactions("greedy-miner");
+greedyCoin.minePendingTransactions("greedy-miner");
 
 console.log(
-  "\nBalance of ben is",
-  sajveeCoin.getBalanceofAddress("bens-address"),
+  "\n💰 Greedy miner balance:",
+  greedyCoin.getBalanceofAddress("greedy-miner"),
 );
+
+console.log("\n=== SCENARIO 2: Smart Miner (includes transactions) ===\n");
+
+const smartCoin = new Blockchain();
+
+// Users create transactions with fees
+smartCoin.createTransaction(new Transaction("user1", "user2", 50, 5));
+smartCoin.createTransaction(new Transaction("user3", "user4", 30, 3));
+smartCoin.createTransaction(new Transaction("user2", "user1", 20, 2));
+
+console.log("Smart miner mines block with 3 transactions:");
+smartCoin.minePendingTransactions("smart-miner");
+
+console.log("Smart miner mines their reward:");
+smartCoin.minePendingTransactions("smart-miner");
+
+console.log(
+  "\n💰 Smart miner balance:",
+  smartCoin.getBalanceofAddress("smart-miner"),
+);
+
+console.log("\n=== COMPARISON ===");
+console.log(
+  `Greedy miner (empty blocks): ${greedyCoin.getBalanceofAddress("greedy-miner")} coins`,
+);
+console.log(
+  `Smart miner (with transactions): ${smartCoin.getBalanceofAddress("smart-miner")} coins`,
+);
+console.log(
+  `\n📊 Smart miner earned ${smartCoin.getBalanceofAddress("smart-miner") - greedyCoin.getBalanceofAddress("greedy-miner")} MORE by including transactions!`,
+);
+
+console.log("\n=== SCENARIO 3: Competition (multiple miners) ===\n");
+
+const competitiveCoin = new Blockchain();
+
+// Many users create transactions
+competitiveCoin.createTransaction(new Transaction("userA", "userB", 100, 10));
+competitiveCoin.createTransaction(new Transaction("userC", "userD", 200, 20));
+competitiveCoin.createTransaction(new Transaction("userE", "userF", 50, 5));
+
+console.log("Miner Alice mines the block with all high-fee transactions:");
+competitiveCoin.minePendingTransactions("alice");
+
+console.log(
+  "\nMiner Bob tries to mine empty block (too late, no transactions left):",
+);
+competitiveCoin.minePendingTransactions("bob");
+
+console.log(
+  "\n💰 Alice's balance:",
+  competitiveCoin.getBalanceofAddress("alice"),
+);
+console.log("💰 Bob's balance:", competitiveCoin.getBalanceofAddress("bob"));
+
+console.log(
+  "\n🎓 LESSON: In competitive mining, you MUST include transactions to:",
+);
+console.log("  1. Earn transaction fees (extra profit)");
+console.log("  2. Beat other miners who are doing the same");
+console.log("  3. Justify the electricity costs of mining");
