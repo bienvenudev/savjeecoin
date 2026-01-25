@@ -62,7 +62,14 @@ class Block {
       this.hash = this.calculateHash();
     }
 
-    console.log("BLOCK MINED:", this.hash);
+  }
+
+  hasValidTransactions() {
+    for (const tx of this.transactions) {
+      if (!tx.isValid()) return false;
+    }
+
+    return true;
   }
 }
 
@@ -75,7 +82,7 @@ class Blockchain {
   }
 
   createGenesisBlock() {
-    return new Block("01/01/2026", "Genesis block", "0");
+    return new Block("01/01/2026", [], "0");
   }
 
   getLatestBlock() {
@@ -83,10 +90,13 @@ class Blockchain {
   }
 
   minePendingTransactions(miningRewardAddress) {
-    let block = new Block(Date.now(), this.pendingTransactions);
+    let block = new Block(
+      Date.now(),
+      this.pendingTransactions,
+      this.getLatestBlock().hash,
+    );
     block.mineBlock(this.difficulty);
 
-    console.log("Block successfully mined!");
     this.chain.push(block);
 
     this.pendingTransactions = [
@@ -94,7 +104,13 @@ class Blockchain {
     ];
   }
 
-  createTransaction(transaction) {
+  addTransaction(transaction) {
+    if (!transaction.fromAddress || !transaction.toAddress)
+      throw new Error("Transaction must include from and to address");
+
+    if (!transaction.isValid())
+      throw new Error("Cannot add invalid transaction on chain");
+
     this.pendingTransactions.push(transaction);
   }
 
@@ -119,6 +135,8 @@ class Blockchain {
     for (let i = 1; i < this.chain.length; i++) {
       const currentBlock = this.chain[i];
       const previousBlock = this.chain[i - 1];
+
+      if (!currentBlock.hasValidTransactions()) return false;
 
       if (currentBlock.hash !== currentBlock.calculateHash()) return false;
 
