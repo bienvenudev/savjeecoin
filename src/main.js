@@ -2,64 +2,59 @@ const { Blockchain, Transaction } = require("./blockchain");
 const EC = require("elliptic").ec;
 const ec = new EC("secp256k1");
 
-// Step 1: Create wallet keys for Ben and Prince
+// Create wallets
 const benKey = ec.genKeyPair();
-const benWalletAddress = benKey.getPublic("hex");
+const benWallet = benKey.getPublic("hex");
 
 const princeKey = ec.genKeyPair();
-const princeWalletAddress = princeKey.getPublic("hex");
+const princeWallet = princeKey.getPublic("hex");
 
-const sajveeCoin = new Blockchain();
+const coin = new Blockchain();
 
-console.log("\n=== STARTING BLOCKCHAIN ===\n");
+console.log("=== 1. INITIAL STATE ===");
+console.log("Ben:", coin.getBalanceofAddress(benWallet));
+console.log("Prince:", coin.getBalanceofAddress(princeWallet));
 
-// Step 2: Ben mines the first block to earn rewards (100 coins)
-console.log("👷 Ben is mining...");
-sajveeCoin.minePendingTransactions(benWalletAddress);
+// Ben mines to get coins
+console.log("\n=== 2. BEN MINES ===");
+coin.minePendingTransactions(benWallet);
+coin.minePendingTransactions(benWallet); // Mine again to confirm reward
+console.log("Ben:", coin.getBalanceofAddress(benWallet)); // Should be 100
 
-console.log("\n=== AFTER FIRST MINING ===");
-console.log("Ben's balance:", sajveeCoin.getBalanceofAddress(benWalletAddress));
-console.log(
-  "Prince's balance:",
-  sajveeCoin.getBalanceofAddress(princeWalletAddress),
-);
+// Ben sends to Prince
+console.log("\n=== 3. BEN → PRINCE (60 coins) ===");
+const tx1 = new Transaction(benWallet, princeWallet, 60);
+tx1.signTransaction(benKey);
+coin.addTransaction(tx1);
+coin.minePendingTransactions(princeWallet); // Prince mines
+console.log("Ben:", coin.getBalanceofAddress(benWallet));    // 140
+console.log("Prince:", coin.getBalanceofAddress(princeWallet)); // 60
 
-// Step 3: Ben sends 50 coins to Prince
-console.log("\n💸 Ben sends 50 coins to Prince...");
-const tx1 = new Transaction(benWalletAddress, princeWalletAddress, 50);
-tx1.signTransaction(benKey); // Ben signs with his private key
-sajveeCoin.addTransaction(tx1);
+// Prince tries to overspend (should fail)
+console.log("\n=== 4. PRINCE TRIES TO OVERSPEND (1000 coins) ===");
+try {
+  const badTx = new Transaction(princeWallet, benWallet, 1000);
+  badTx.signTransaction(princeKey);
+  coin.addTransaction(badTx);
+} catch (e) {
+  console.log("❌ REJECTED:", e.message);
+}
 
-// Step 4: Mine the block containing the transaction
-console.log("\n👷 Prince is mining...");
-sajveeCoin.minePendingTransactions(princeWalletAddress);
+// Valid transaction
+console.log("\n=== 5. PRINCE → BEN (30 coins) ===");
+const tx2 = new Transaction(princeWallet, benWallet, 30);
+tx2.signTransaction(princeKey);
+coin.addTransaction(tx2);
+coin.minePendingTransactions(benWallet);
+console.log("Ben:", coin.getBalanceofAddress(benWallet));    // 170
+console.log("Prince:", coin.getBalanceofAddress(princeWallet)); // 130
 
-console.log("\n=== AFTER SECOND MINING ===");
-console.log("Ben's balance:", sajveeCoin.getBalanceofAddress(benWalletAddress));
-console.log(
-  "Prince's balance:",
-  sajveeCoin.getBalanceofAddress(princeWalletAddress),
-);
+// Validate chain
+console.log("\n=== 6. CHAIN VALIDATION ===");
+console.log("Valid?", coin.isChainValid()); // true
 
-// Step 5: Prince sends 20 coins back to Ben
-console.log("\n💸 Prince sends 20 coins back to Ben...");
-const tx2 = new Transaction(princeWalletAddress, benWalletAddress, 20);
-tx2.signTransaction(princeKey); // Prince signs with his private key
-sajveeCoin.addTransaction(tx2);
+// Tamper with a transaction
+// console.log("\n=== 7. TAMPERING TEST ===");
+// coin.chain[3].transactions[0].amount = 9999;
 
-// Step 6: Ben mines again
-console.log("\n👷 Ben is mining...");
-sajveeCoin.minePendingTransactions(benWalletAddress);
-
-console.log("\n=== FINAL BALANCES ===");
-console.log("Ben's balance:", sajveeCoin.getBalanceofAddress(benWalletAddress));
-console.log(
-  "Prince's balance:",
-  sajveeCoin.getBalanceofAddress(princeWalletAddress),
-);
-
-// Uncomment this line if you want to test tampering with the chain
-// sajveeCoin.chain[2].transactions[0].amount = 10;
-
-// Check if the chain is valid
-console.log("\n✅ Is blockchain valid?", sajveeCoin.isChainValid());
+// console.log("After tampering, valid?", coin.isChainValid()); // false

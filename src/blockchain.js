@@ -61,7 +61,6 @@ class Block {
       this.nonce++;
       this.hash = this.calculateHash();
     }
-
   }
 
   hasValidTransactions() {
@@ -110,6 +109,9 @@ class Blockchain {
 
     if (!transaction.isValid())
       throw new Error("Cannot add invalid transaction on chain");
+
+    if (this.getBalanceofAddress(transaction.fromAddress) < transaction.amount)
+      throw new Error("Insufficient funds!");
 
     this.pendingTransactions.push(transaction);
   }
