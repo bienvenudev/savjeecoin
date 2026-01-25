@@ -277,6 +277,152 @@ This scanning approach is similar to Bitcoin's UTXO (Unspent Transaction Output)
 - **Immutability:** Can't change past transactions without re-mining
 - **Trustless:** Don't need to trust anyone - verify the math yourself
 
+## Digital Signatures & Cryptographic Security
+
+### How Transaction Signing Works
+
+**The Key Pair System:**
+- **Private Key:** Your password - signs transactions to prove ownership
+- **Public Key:** Your wallet address - everyone can see it and verify your signatures
+
+**Signing Process:**
+1. Create transaction hash (fingerprint of transaction data)
+2. Sign hash with your private key → creates unique signature
+3. Anyone can verify signature using your public key
+4. Proves you authorized the transaction without revealing private key
+
+**Analogy:**
+- Public key = Your email address (shareable)
+- Private key = Your password (secret)
+- Signature = Proof you sent the email
+
+### Why Public Key IS Your Wallet Address
+
+Your wallet address is literally your public key (in hex format):
+- When creating transaction: `fromAddress = myPublicKey`
+- When signing: Check that `signingKey.getPublic() === fromAddress`
+- This ensures you can only spend from wallets you own
+
+### Transaction Validation Flow
+
+**Creating a transaction:**
+```javascript
+const tx = new Transaction(myPublicKey, recipientPublicKey, 50);
+tx.signTransaction(myPrivateKeyPair);
+```
+
+**Validating the transaction:**
+1. Check signature exists and is not empty
+2. Extract public key from `fromAddress`
+3. Verify signature matches transaction hash using that public key
+4. If valid → transaction was signed by owner of that address
+
+**Key insight:** You create the signature; others verify it. The blockchain validates all signatures before accepting transactions.
+
+## Mining Rewards & Transaction Timing
+
+### The One-Block Delay
+
+Mining rewards don't appear immediately - they're delayed by one block:
+
+**Flow:**
+1. **Mine Block 1:** Pending transactions → Block 1. New pending: [Reward for miner]
+2. **Mine Block 2:** [Reward for miner] → Block 2. New pending: [New reward]
+3. First reward is NOW confirmed and spendable
+
+**Why:** Rewards are transactions too - they need to be mined into a block to be confirmed.
+
+### Mining Creates Money
+
+**Where do coins come from?**
+- Mining creates new coins "from nothing" (`fromAddress = null`)
+- This is controlled by code: fixed supply, decreasing rewards over time
+- Not like government printing money - supply is mathematically enforced
+- Scarcity maintained through predetermined issuance schedule
+
+**Mining Incentive Evolution:**
+- **Now:** Block reward + transaction fees
+- **Future:** Transaction fees only (when supply cap reached)
+- High network usage = higher fees = profitable mining without new coins
+
+## Common Implementation Pitfalls
+
+### 1. Missing Balance Validation
+Simple implementations don't check if sender has sufficient funds - leads to negative balances!
+
+**Fix:** Before adding transaction:
+```javascript
+if (getBalanceOfAddress(fromAddress) < amount) {
+  throw new Error('Insufficient funds');
+}
+```
+
+### 2. Pending Transaction Double-Spend
+Critical bug: User creates multiple pending transactions spending same confirmed balance.
+
+**Example:**
+- Balance: 100 coins
+- Create pending: Send 100 to Alice
+- Create pending: Send 100 to Bob (same 100 coins!)
+- Both get mined → -100 balance
+
+**Fix:** Check total pending amount + current transaction doesn't exceed balance.
+
+### 3. Genesis Block Link
+First block needs `previousHash` parameter when creating blocks, or chain validation fails.
+
+**Fix:**
+```javascript
+new Block(timestamp, pendingTx, this.getLatestBlock().hash)
+```
+
+### 4. Mining Transaction Bypass
+Mining rewards bypass `addTransaction()` validation (no signature needed).
+
+**Why it works:** Mining rewards added directly to `pendingTransactions` array, not through validation.
+
+## Chain Validation Mechanics
+
+### What Gets Validated
+
+**1. Hash Integrity:**
+- Recalculate each block's hash
+- Compare with stored hash
+- Any tampering changes the hash → detected
+
+**2. Chain Links:**
+- Check `block.previousHash === previousBlock.hash`
+- Ensures blocks are properly connected
+- Breaking one link invalidates entire chain
+
+**3. Transaction Signatures:**
+- Verify each transaction was signed by wallet owner
+- Prevents unauthorized spending
+
+**Key Insight:** Transaction data is baked into block hash via `JSON.stringify(transactions)`. Changing any transaction (amount, signature, addresses) changes the block hash, failing validation even without explicit signature checks.
+
+### Why Tampering Fails
+
+Changing a past transaction:
+1. Changes block's transaction data
+2. Changes block hash (includes transaction data)
+3. Breaks link to next block (previousHash mismatch)
+4. Must re-mine that block AND all subsequent blocks
+5. Computationally infeasible with sufficient chain length
+
+## Block Structure & Contents
+
+### Empty Blocks Are Normal
+
+**Common misconception:** Every block has transactions
+
+**Reality:**
+- Block 0 (genesis): Empty `[]`
+- Block 1 (first mine): Often empty `[]` - reward added to pending AFTER mining
+- Block 2+: Contains previous rewards + user transactions
+
+**Why:** Pending pool starts empty; rewards are added AFTER each mine.
+
 ## Key Takeaways
 
 - Mining is a brute-force search for specific hash patterns
@@ -286,3 +432,7 @@ This scanning approach is similar to Bitcoin's UTXO (Unspent Transaction Output)
 - Not all blockchains use PoW - many modern chains use PoS or hybrid approaches
 - Tokens inherit security from their base blockchain
 - Blockchain transactions take time - this is by design, not a bug
+- Digital signatures prove transaction ownership without revealing private keys
+- Mining rewards are transactions too - delayed by one block
+- Simple implementations have critical bugs (balance checks, double-spend prevention)
+- Chain validation relies on cryptographic hashing - tampering is detectable
