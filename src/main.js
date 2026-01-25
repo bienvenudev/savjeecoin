@@ -27,7 +27,7 @@ const tx1 = new Transaction(benWallet, princeWallet, 60);
 tx1.signTransaction(benKey);
 coin.addTransaction(tx1);
 coin.minePendingTransactions(princeWallet); // Prince mines
-console.log("Ben:", coin.getBalanceofAddress(benWallet));    // 140
+console.log("Ben:", coin.getBalanceofAddress(benWallet)); // 140
 console.log("Prince:", coin.getBalanceofAddress(princeWallet)); // 60
 
 // Prince tries to overspend (should fail)
@@ -46,7 +46,7 @@ const tx2 = new Transaction(princeWallet, benWallet, 30);
 tx2.signTransaction(princeKey);
 coin.addTransaction(tx2);
 coin.minePendingTransactions(benWallet);
-console.log("Ben:", coin.getBalanceofAddress(benWallet));    // 170
+console.log("Ben:", coin.getBalanceofAddress(benWallet)); // 170
 console.log("Prince:", coin.getBalanceofAddress(princeWallet)); // 130
 
 // Validate chain
