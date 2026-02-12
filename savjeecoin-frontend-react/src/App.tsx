@@ -8,11 +8,12 @@ function App() {
         <a href="/" className="text-white font-bold">SavjeeCoin</a>
       </nav>
 
-      <main className="px-10">
+      <main className="px-10 pt-4">
         <h1 className="text-2xl font-bold mb-4">Blocks on chain</h1>
         <p className="mb-6">Each card represents a block on the chain. Click on a block to see the transactions stored inside.</p>
-
-      <BlockchainViewer />
+        <div className="overflow-x-scroll">
+          <BlockchainViewer />
+        </div>
       </main>
     </>
   )
