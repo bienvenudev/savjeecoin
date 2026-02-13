@@ -5,25 +5,42 @@ import { blockchainService } from '../services/blockchainService';
 
 export function BlockchainViewer() {
   const [selectedBlock, setSelectedBlock] = useState(blockchainService.blockchainInstance.chain[0]);
+  const blocks = blockchainService.blockchainInstance.chain;
 
-  function showTransactionsForBlock(block: any) { setSelectedBlock(block); }
+  function showTransactionsForBlock(block: any) {
+    setSelectedBlock(block);
+  }
+
+  function getBlockNumber(block: any) {
+    console.log('blocks', blocks);
+    return blocks.indexOf(block) + 1;
+  }
 
   return (
-    <div>
+    <div className='container mx-auto px-4'>
 
-      {
-        // does this initialize a blockchainservice instance? why when i refresh the page, the block hash changes?
-        blockchainService.blockchainInstance.chain.map(block => // why not this 'blockchainInstance.chain' instead of '.getBlocks()'?
-          <BlockView key={block.hash} block={block} onClick={() => {
-            showTransactionsForBlock(block);
-          }} />
+      <div className='my-8'>
+        <h1 className="text-3xl font-bold mb-4">Blocks on chain</h1>
+        <p className="mb-6">Each card represents a block on the chain. Click on a block to see the transactions stored inside.</p>
+      </div>
 
-
-        )}
+      <div className='overflow-x-auto whitespace-nowrap pb-4 mb-8'>
+        {
+          // does this initialize a blockchainservice instance? why when i refresh the page, the block hash changes?
+          blocks.map(block => // why not this 'blockchainInstance.chain' instead of '.getBlocks()'?
+            <BlockView
+              key={block.hash}
+              block={block}
+              blockNumber={getBlockNumber(block)}
+              isSelected={selectedBlock === block}
+              onClick={() => showTransactionsForBlock(block)}
+            />
+          )}
+      </div>
 
       {selectedBlock && (
-        <div className='mt-8'>
-          <h2 className="text-3xl font-bold mt-12 mb-4">Transactions inside block {selectedBlock.hash.substring(0, 8)}</h2>
+        <div className='my-8'>
+          <h1 className="text-4xl font-bold mb-4">Transactions inside block {getBlockNumber(selectedBlock)}</h1>
           <TransactionsTable transactions={selectedBlock.transactions} />
         </div>
       )}

@@ -1,16 +1,22 @@
 interface Props {
   block: any;
+  blockNumber: number;
+  isSelected: boolean;
   onClick?: () => void;
 }
 
-export function BlockView({ block, onClick }: Props) {
+export function BlockView({ block, blockNumber, isSelected, onClick }: Props) {
 
   return (
     <>
-      <div className="rounded-lg border border-gray-300 w-[18rem] inline-block mr-4 cursor-pointer hover:border-blue-500 transition-colors" onClick={onClick}>
+      <div
+        className={`rounded-lg border w-[18rem] inline-block mr-4 cursor-pointer hover:border-blue-500 transition-colors ${isSelected ? 'border-blue-500 border-2' : 'border-gray-300'
+          }`}
+        onClick={onClick}
+      >
         <div className="p-4">
           <h5 className="text-lg font-semibold">
-            Block {block.hash.substring(0, 8)}
+            Block {blockNumber}
             {block.previousHash === '0' && <small className="text-gray-500 text-sm ml-2">(Genesis block)</small>}
           </h5>
         </div>

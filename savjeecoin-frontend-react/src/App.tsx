@@ -9,11 +9,7 @@ function App() {
       </nav>
 
       <main className="px-10 pt-4">
-        <h1 className="text-2xl font-bold mb-4">Blocks on chain</h1>
-        <p className="mb-6">Each card represents a block on the chain. Click on a block to see the transactions stored inside.</p>
-        <div className="overflow-x-scroll">
-          <BlockchainViewer />
-        </div>
+        <BlockchainViewer />
       </main>
     </>
   )

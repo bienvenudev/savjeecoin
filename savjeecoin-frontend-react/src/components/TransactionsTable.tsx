@@ -1,24 +1,46 @@
 
 export function TransactionsTable({ transactions }: any) {
+  if (transactions?.length === 0) {
+    return <p className="text-gray-600">This block has no transactions</p>
+  }
+
   return (
-    transactions?.length === 0 ? <p>This block has no transactions</p> : (
-      <div>
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>From</th>
-              <th>To</th>
-              <th>Amount</th>
-              <th>Timestamp</th>
-              <th>Valid?</th>
+    <div className="overflow-x-auto">
+      <table className="min-w-full border border-gray-200">
+        <thead className="bg-gray-50">
+          <tr>
+            <th className="px-4 py-3 text-left text-sm font-semibold">#</th>
+            <th className="px-4 py-3 text-left text-sm font-semibold">From</th>
+            <th className="px-4 py-3 text-left text-sm font-semibold">To</th>
+            <th className="px-4 py-3 text-left text-sm font-semibold">Amount</th>
+            <th className="px-4 py-3 text-left text-sm font-semibold">Timestamp</th>
+            <th className="px-4 py-3 text-left text-sm font-semibold">Valid?</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-200">
+          {transactions?.map((tx: any, index: number) => (
+            <tr key={index} className="hover:bg-gray-50">
+              <td className="px-4 py-3">{index}</td>
+              <td className="px-4 py-3 max-w-25 truncate">
+                {tx.fromAddress ? tx.fromAddress : <span className="text-gray-500">System</span>}
+              </td>
+              <td className="px-4 py-3 max-w-25 truncate">{tx.toAddress}</td>
+              <td className="px-4 py-3">
+                {tx.amount}
+                {!tx.fromAddress && <><br /><small className="text-gray-500">(Block reward)</small></>}
+              </td>
+              <td className="px-4 py-3">
+                {tx.timestamp}<br />
+                <small className="text-gray-500">{new Date(tx.timestamp).toLocaleString()}</small>
+              </td>
+              <td className="px-4 py-3 text-center">
+                {tx.isValid() ? '✓' : '✗'}
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {transactions?.map((tx: any, index: number) => (<tr key={index}> <td>{index}</td> <td>{tx.fromAddress}</td> <td>{tx.toAddress}</td> <td>{tx.amount}</td> <td>{tx.timestamp}</td> <td>{tx.isValid() ? '✓' : '✗'}</td> </tr>))}
-          </tbody>
-        </table>
-      </div>
-    ));
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
