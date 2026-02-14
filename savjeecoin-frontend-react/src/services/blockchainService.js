@@ -26,6 +26,12 @@ class BlockchainService {
       privateKey: key.getPrivate("hex"),
     });
   }
+
+  createTransaction(newTx) {
+    console.log("here in create tx", newTx);
+    this.blockchainInstance.addTransaction(newTx);
+    console.log('pending transactions array', this.blockchainInstance.pendingTransactions)
+  }
 }
 
 export const blockchainService = new BlockchainService(); // why initializing this? does it mean that while exporting this fn it will always create a new instance of blockchainservice?

@@ -1,6 +1,7 @@
 import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
 import { BlockchainViewer } from "./pages/BlockchainViewer"
 import { Settings } from "./components/Settings";
+import { CreateTransaction } from "./components/CreateTransaction";
 
 function App() {
 
@@ -15,6 +16,11 @@ function App() {
               Settings
             </button>
           </Link>
+          <Link to="/new/transaction">
+            <button className="ml-4 font-bold outline-2 cursor-pointer p-3 rounded hover:bg-white hover:text-gray-500">
+              Create Transaction
+            </button>
+          </Link>
         </div>
       </nav>
 
@@ -22,6 +28,7 @@ function App() {
         <Routes>
           <Route path="/" element={<BlockchainViewer />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/new/transaction" element={<CreateTransaction />} />
         </Routes>
       </main>
     </BrowserRouter>

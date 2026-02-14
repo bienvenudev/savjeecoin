@@ -17,7 +17,7 @@ export function Settings() {
   }
 
   return (
-    <div>
+    <>
       <h1 className="text-3xl font-bold mb-12">Settings</h1>
 
       <label htmlFor="difficulty">Difficulty</label>
@@ -31,6 +31,6 @@ export function Settings() {
       }} className='w-full border-1 border-gray-400 rounded p-2' />
 
       <button className='mt-8 font-bold outline-2 cursor-pointer p-3 rounded hover:bg-white hover:text-gray-500' onClick={handleSave}>Save</button>
-    </div>
+    </>
   )
 }
