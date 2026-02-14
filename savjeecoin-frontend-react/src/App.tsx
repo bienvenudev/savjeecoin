@@ -1,7 +1,8 @@
 import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
 import { BlockchainViewer } from "./pages/BlockchainViewer"
-import { Settings } from "./components/Settings";
-import { CreateTransaction } from "./components/CreateTransaction";
+import { Settings } from "./pages/Settings";
+import { CreateTransaction } from "./pages/CreateTransaction";
+import { PendingTransactions } from "./pages/PendingTransactions";
 
 function App() {
 
@@ -21,6 +22,11 @@ function App() {
               Create Transaction
             </button>
           </Link>
+          <Link to="/new/transaction/pending">
+            <button className="ml-4 font-bold outline-2 cursor-pointer p-3 rounded hover:bg-white hover:text-gray-500">
+              Pending Transactions
+            </button>
+          </Link>
         </div>
       </nav>
 
@@ -29,6 +35,7 @@ function App() {
           <Route path="/" element={<BlockchainViewer />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/new/transaction" element={<CreateTransaction />} />
+          <Route path="/new/transaction/pending" element={<PendingTransactions />} />
         </Routes>
       </main>
     </BrowserRouter>

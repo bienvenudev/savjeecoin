@@ -7,7 +7,7 @@ class BlockchainService {
 
   constructor() {
     this.blockchainInstance.difficulty = 1;
-    this.blockchainInstance.minePendingTransactions("my-wallet-address");
+    this.blockchainInstance.minePendingTransactions("my-wallet-address"); // shouldn't i initialize this to 'this.walletKeys[0].publicKey'
 
     this.generateWalletKeys();
   }
@@ -30,7 +30,18 @@ class BlockchainService {
   createTransaction(newTx) {
     console.log("here in create tx", newTx);
     this.blockchainInstance.addTransaction(newTx);
-    console.log('pending transactions array', this.blockchainInstance.pendingTransactions)
+    console.log(
+      "pending transactions array",
+      this.blockchainInstance.pendingTransactions,
+    );
+  }
+
+  getPendingTransactions() {
+    return this.blockchainInstance.pendingTransactions;
+  }
+
+  mineTransactions() {
+    this.blockchainInstance.minePendingTransactions(this.walletKeys[0].publicKey);
   }
 }
 
