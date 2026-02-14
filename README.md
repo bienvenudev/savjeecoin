@@ -19,6 +19,10 @@ Following [Savjee's Blockchain Tutorial Series](https://www.youtube.com/watch?v=
 ### 🚧 Part 5: Frontend (React instead of Angular)
 - **Part 5**: Building a React frontend ([Original Angular Video](https://www.youtube.com/watch?v=AQV0WNpE_3g))
 
+## 📝 Learning Notes
+
+Detailed explanations of my learnings on blockchain concepts, common pitfalls, and implementation decisions: **[LEARNING_NOTES.md](LEARNING_NOTES.md)**
+
 ## 🏗️ Project Structure
 
 ```
