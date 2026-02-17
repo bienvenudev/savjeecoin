@@ -1,5 +1,7 @@
+import { Link } from 'react-router-dom';
 
 export function TransactionsTable({ transactions }: any) {
+
   if (transactions?.length === 0) {
     return <p className="text-gray-600">This block has no transactions</p>
   }
@@ -14,7 +16,7 @@ export function TransactionsTable({ transactions }: any) {
             <th className="px-4 py-3 text-left text-sm font-semibold">To</th>
             <th className="px-4 py-3 text-left text-sm font-semibold">Amount</th>
             <th className="px-4 py-3 text-left text-sm font-semibold">Timestamp</th>
-            <th className="px-4 py-3 text-left text-sm font-semibold">Valid?</th>
+            <th font-bold mb-8th className="px-4 py-3 text-left text-sm font-semibold">Valid?</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200">
@@ -22,9 +24,17 @@ export function TransactionsTable({ transactions }: any) {
             <tr key={index} className="hover:bg-gray-50">
               <td className="px-4 py-3">{index}</td>
               <td className="px-4 py-3 max-w-25 truncate">
-                {tx.fromAddress ? tx.fromAddress : <span className="text-gray-500">System</span>}
+                {tx.fromAddress ?
+                  <Link to={`/wallet/${tx.fromAddress}`}>
+                    {tx.fromAddress}
+                  </Link>
+                  : <span className="text-gray-500">System</span>}
               </td>
-              <td className="px-4 py-3 max-w-25 truncate">{tx.toAddress}</td>
+              <td className="px-4 py-3 max-w-25 truncate">
+                <Link to={`/wallet/${tx.toAddress}`}>
+                  {tx.toAddress}
+                </Link>
+              </td>
               <td className="px-4 py-3">
                 {tx.amount}
                 {!tx.fromAddress && <><br /><small className="text-gray-500">(Block reward)</small></>}

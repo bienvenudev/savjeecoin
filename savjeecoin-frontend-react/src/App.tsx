@@ -3,6 +3,7 @@ import { BlockchainViewer } from "./pages/BlockchainViewer"
 import { Settings } from "./pages/Settings";
 import { CreateTransaction } from "./pages/CreateTransaction";
 import { PendingTransactions } from "./pages/PendingTransactions";
+import { WalletDetails } from "./pages/WalletDetails";
 
 function App() {
 
@@ -36,6 +37,7 @@ function App() {
           <Route path="/settings" element={<Settings />} />
           <Route path="/new/transaction" element={<CreateTransaction />} />
           <Route path="/new/transaction/pending" element={<PendingTransactions />} />
+          <Route path="/wallet/:walletAddress" element={<WalletDetails />} />
         </Routes>
       </main>
     </BrowserRouter>
