@@ -12,7 +12,6 @@ export function BlockchainViewer() {
   }
 
   function getBlockNumber(block: any) {
-    console.log('blocks', blocks);
     return blocks.indexOf(block) + 1;
   }
 

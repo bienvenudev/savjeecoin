@@ -5,15 +5,9 @@ export function Settings() {
   const [difficulty, setDifficulty] = useState(blockchainService.blockchainInstance.difficulty);
   const [miningReward, setMiningReward] = useState(blockchainService.blockchainInstance.miningReward);
 
-  console.log('updated difficulty is', difficulty)
-  console.log('updated miningReward is', miningReward)
-
   function handleSave() {
     blockchainService.blockchainInstance.difficulty = difficulty
     blockchainService.blockchainInstance.miningReward = miningReward
-
-    console.log('just saved difficulty to', difficulty);
-    console.log('just saved miningReward to', miningReward);
   }
 
   return (
