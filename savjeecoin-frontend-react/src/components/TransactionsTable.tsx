@@ -25,13 +25,13 @@ export function TransactionsTable({ transactions }: any) {
               <td className="px-4 py-3">{index}</td>
               <td className="px-4 py-3 max-w-25 truncate">
                 {tx.fromAddress ?
-                  <Link to={`/wallet/${tx.fromAddress}`}>
+                  <Link className='text-blue-500 hover:text-blue-800 hover:underline' to={`/wallet/${tx.fromAddress}`}>
                     {tx.fromAddress}
                   </Link>
                   : <span className="text-gray-500">System</span>}
               </td>
               <td className="px-4 py-3 max-w-25 truncate">
-                <Link to={`/wallet/${tx.toAddress}`}>
+                <Link className='text-blue-500 hover:text-blue-800 hover:underline' to={`/wallet/${tx.toAddress}`}>
                   {tx.toAddress}
                 </Link>
               </td>
