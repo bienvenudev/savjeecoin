@@ -7,8 +7,7 @@ class BlockchainService {
 
   constructor() {
     this.blockchainInstance.difficulty = 1;
-    this.blockchainInstance.minePendingTransactions("my-wallet-address"); // shouldn't i initialize this to 'this.walletKeys[0].publicKey'
-
+    this.blockchainInstance.minePendingTransactions("my-wallet-address"); 
     this.generateWalletKeys();
   }
 
@@ -54,4 +53,4 @@ class BlockchainService {
   }
 }
 
-export const blockchainService = new BlockchainService(); // why initializing this? does it mean that while exporting this fn it will always create a new instance of blockchainservice?
+export const blockchainService = new BlockchainService();

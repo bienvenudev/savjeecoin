@@ -25,8 +25,7 @@ export function BlockchainViewer() {
 
       <div className='overflow-x-auto whitespace-nowrap pb-4 mb-8'>
         {
-          // does this initialize a blockchainservice instance? why when i refresh the page, the block hash changes?
-          blocks.map(block => // why not this 'blockchainInstance.chain' instead of '.getBlocks()'?
+          blocks.map(block =>
             <BlockView
               key={block.hash}
               block={block}
