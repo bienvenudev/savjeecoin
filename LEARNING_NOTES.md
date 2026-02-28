@@ -644,88 +644,251 @@ The deeper the block, the more work required to reverse it.
 **Important Realization:**
 React is conceptually simpler - no magic code generation, no dependency injection. You just write JavaScript functions and compose them.
 
-### Component Architecture Decisions
+### Component Architecture for Blockchain Visualization
 
 **BlockchainViewer (Page):**
-- Manages selected block state
-- Maps blockchain data to components
-- Handles user interactions
+- Displays all blocks in the chain
+- Manages which block is selected
+- Shows transactions for selected block
 
 **BlockView (Component):**
-- Displays individual block
-- Receives props: `block`, `blockNumber`, `isSelected`, `onClick`
-- Controlled by parent (no internal state)
+- Renders individual block: hash, nonce, timestamp, transaction count
+- Highlights selected block
+- No internal state - controlled by parent
 
 **TransactionsTable (Component):**
-- Receives `transactions` array as prop
-- Pure presentation component
-- No blockchain logic
+- Displays transaction list with from/to/amount/validation
+- Shows "System" for mining rewards (null fromAddress)
+- Indicates which addresses belong to current user's wallet
 
-**Key Principle:** Smart parent, dumb children. Pages handle state/logic, components handle display.
+**Blockchain-Specific Patterns:**
+- Pages fetch data from blockchainService (the singleton)
+- Components receive blockchain data via props
+- Service layer prevents direct blockchain manipulation from UI
 
 ### State Management Pitfalls
 
-**Common Confusion:**
+**Understanding React State vs Blockchain State:**
 ```tsx
-// React state (local to component)
+// React state (UI only - resets on refresh)
 const [difficulty, setDifficulty] = useState(1);
 
-// Service instance (shared across app)
+// Blockchain state (persists until page refresh)
 blockchainService.blockchainInstance.difficulty = difficulty;
 ```
 
-**Understanding:**
-- React state is for UI reactivity (form inputs, toggles)
-- Service instance is for shared data (blockchain singleton)
+**Key Understanding:**
+- React state = UI reactivity (form inputs, selected block, toggles)
+- Service instance = Blockchain data (chain, pending txs, wallets)
 - Mutating service instance is FINE (it's not React state)
-- Changes persist until page refresh (lives in JavaScript memory)
+- Blockchain lives in JavaScript memory until page refresh
 
-**Two-Way Binding Difference:**
-- **Angular:** `[(ngModel)]="blockchain.difficulty"` - auto-saves on type
-- **React:** Controlled input + save button - more explicit
+### The Singleton Pattern in JavaScript
 
-Both valid! React's approach is more predictable (you control when changes apply).
+**How the Service Works:**
 
-### Controlled vs Uncontrolled Inputs
+```javascript
+// blockchainService.js
+class BlockchainService {
+  constructor() {
+    // Initialization happens ONCE
+    this.blockchainInstance = new Blockchain();
+    this.generateWalletKeys();
+  }
+}
 
-**Wrong (Uncontrolled):**
-```tsx
-<input type="number" defaultValue={difficulty} />
-// Can't read updated value, UI doesn't sync with state
+export const blockchainService = new BlockchainService(); // ← Created immediately!
 ```
 
-**Right (Controlled):**
-```tsx
-<input 
-  type="number" 
-  value={difficulty} 
-  onChange={(e) => setDifficulty(Number(e.target.value))} 
-/>
-// React controls the value, state is source of truth
+**Key Understanding:**
+- `new BlockchainService()` runs when module first loads
+- Constructor executes ONCE, not on every import
+- Every component that imports gets the SAME instance
+- This is called the **Singleton Pattern**
+
+**What Happens:**
+```javascript
+// App.tsx imports
+import { blockchainService } from './services/blockchainService';
+// → Constructor runs, blockchain created, wallet generated
+
+// CreateTransaction.tsx imports
+import { blockchainService } from './services/blockchainService';
+// → Gets EXISTING instance, constructor does NOT run again!
+
+// Both files share the same blockchain!
 ```
 
-**Key Concept:** React components should be "controlled" - their state determines what's displayed, not the DOM.
+**Why This Matters:**
+- All components share same blockchain data
+- Transactions persist across navigation
+- Changes in one component visible in another
+- Lives in memory until page refresh
 
-### Props Flow Pattern
+### React Re-rendering Challenges
 
-**Parent → Child (Data Down):**
+**The Problem:**
+React components don't automatically re-render when external data (like blockchain) changes.
+
+**Example - Component Doesn't Update:**
 ```tsx
-<BlockView block={block} blockNumber={1} isSelected={true} />
+export function PendingTransactions() {
+  return (
+    <TransactionsTable 
+      transactions={blockchainService.getPendingTransactions()} 
+    />
+  );
+}
 ```
 
-**Child → Parent (Events Up):**
+**Why it fails:**
+- When you mine, `pendingTransactions` changes in the service
+- But React doesn't know to re-render this component
+- UI shows stale data
+
+**Solution: Lift State Up + Callbacks:**
 ```tsx
-<BlockView onClick={() => handleBlockClick(block)} />
+// App.tsx (parent controls state)
+function App() {
+  const [pendingCount, setPendingCount] = useState(
+    blockchainService.getPendingTransactions().length
+  );
+
+  const refreshPending = () => {
+    setPendingCount(blockchainService.getPendingTransactions().length);
+  };
+
+  return (
+    <Routes>
+      <Route path="/create" element={<CreateTransaction onTxCreated={refreshPending} />} />
+      <Route path="/pending" element={<PendingTransactions onMined={refreshPending} />} />
+    </Routes>
+  );
+}
+
+// CreateTransaction.tsx (child calls callback)
+function CreateTransaction({ onTxCreated }) {
+  const addTransaction = () => {
+    blockchainService.createTransaction(newTx);
+    onTxCreated(); // ← Triggers parent re-render!
+  };
+}
 ```
 
-**Unidirectional Data Flow:**
-- Props flow down the component tree
-- Events bubble up through callbacks
-- State lives as high as needed, passed down as props
-- This makes data flow predictable and debuggable
+**Pattern:**
+1. Parent owns the state
+2. Parent passes callback to children
+3. Children call callback when data changes
+4. Parent updates state → re-renders
+
+### Reactive UI Patterns
+
+**Showing Pending Transactions Dynamically:**
+
+UI should reflect current blockchain state - if there are pending transactions, show navigation to pending page:
+
+```tsx
+function App() {
+  const [pendingCount, setPendingCount] = useState(
+    blockchainService.getPendingTransactions().length
+  );
+
+  return (
+    <nav>
+      {pendingCount > 0 && (
+        <Link to="/pending">Pending Transactions ({pendingCount})</Link>
+      )}
+    </nav>
+  );
+}
+```
+
+**Blockchain-Specific UI Patterns:**
+- Show pending count badge when transactions await mining
+- Disable "Mine" button when mempool is empty
+- Display balance changes after mining completes
+- Update block list when new block is added
+
+### Genesis Block Initialization
+
+**The Decision: Who Gets Genesis Reward?**
+
+**Option 1: Dummy Address (Tutorial Way - Recommended)**
+```javascript
+constructor() {
+  this.blockchainInstance.minePendingTransactions("genesis-miner"); // Nobody's wallet
+  this.generateWalletKeys(); // Your wallet starts at 0
+}
+```
+
+**Option 2: Your Wallet**
+```javascript
+constructor() {
+  this.generateWalletKeys(); // Create wallet first
+  this.blockchainInstance.minePendingTransactions(this.walletKeys[0].publicKey); // Start with 100 coins
+}
+```
+
+**Why Tutorial Way is Better for Learning:**
+- **Realistic:** Mirrors real blockchains (genesis rewards go to founders/burned addresses)
+- **Educational:** Forces you to mine blocks to earn coins
+- **Economic understanding:** Demonstrates that coins must be earned, not given
+- **Motivation:** You start with 0, must participate to get rewards
+
+**Real-World Parallel:**
+- Bitcoin: Genesis reward to Satoshi (never spent)
+- Ethereum: Pre-mine to founders (controversial)
+- Most chains: Genesis hardcoded, not mined at all
+
+**For learning, start with nothing and earn through mining!**
+
+### Common Pitfalls & Solutions
+
+**1. Forgetting to Update UI After Blockchain Changes:**
+```tsx
+// ❌ Component won't reflect new transactions
+function CreateTransaction({ onTxCreated }) {
+  const addTransaction = () => {
+    blockchainService.createTransaction(newTx);
+    // Forgot to call onTxCreated()!
+  };
+}
+
+// ✅ CORRECT - Notify parent to re-render
+const addTransaction = () => {
+  blockchainService.createTransaction(newTx);
+  onTxCreated(); // Triggers parent state update!
+};
+```
+
+**2. Not Understanding When Blockchain Resets:**
+- Page refresh = new blockchain instance
+- Different timestamps = different hashes every reload
+- This is expected behavior (no persistence layer)
+- Real apps save blockchain to database/local storage or connect to blockchain network
+
+### Project Architecture for Blockchain Visualization
+
+**Service Layer (Blockchain State):**
+- `blockchainService.js` - Singleton wrapping blockchain instance
+- All components access blockchain through this service
+- Single source of truth for chain data, wallet keys, pending transactions
+
+**Pages (Blockchain Views):**
+- BlockchainViewer - Visualize chain and blocks
+- CreateTransaction - Broadcast new transactions to mempool
+- PendingTransactions - View mempool + mining interface
+- WalletDetails - Show address balance and transaction history
+
+**Components (Reusable UI):**
+- BlockView - Display individual block data
+- TransactionsTable - Render transaction list with validation status
+
+**Key Principle:** Keep blockchain logic in the service layer, not scattered across UI components.
 
 ## Key Takeaways
 
+### Core Blockchain Concepts
 - Mining is a brute-force search for specific hash patterns
 - The nonce is what makes each hash attempt unique
 - Higher difficulty = more leading zeros = exponentially more attempts needed
@@ -737,6 +900,8 @@ Both valid! React's approach is more predictable (you control when changes apply
 - Mining rewards are transactions too - delayed by one block
 - Simple implementations have critical bugs (balance checks, double-spend prevention)
 - Chain validation relies on cryptographic hashing - tampering is detectable
+
+### Blockchain Network Operations
 - **Genesis blocks are hardcoded in real blockchains, not mined**
 - **Multiple transactions per block = efficiency (vs 1 tx per block)**
 - **Mempool is the waiting room for pending transactions**
@@ -744,6 +909,10 @@ Both valid! React's approach is more predictable (you control when changes apply
 - **Block order defines chronology, not timestamps**
 - **Longest valid chain wins - orphaned blocks lose but transactions survive**
 - **Deep confirmations (6+ blocks) make reversals computationally impossible**
-- **React and Angular solve the same problems with different syntax**
-- **Controlled inputs in React = explicit state management**
-- **Services/singletons persist until page refresh (JavaScript memory)**
+
+### React Development Patterns
+- **Singleton pattern for blockchain: `export const service = new Service()` creates ONE shared instance**
+- **React components don't auto-update when blockchain changes - use callbacks to parent**
+- **Lift blockchain-related state up to parent when multiple components need to react**
+- **Service layer isolates blockchain logic from UI components**
+- **Blockchain state persists in memory until page refresh (no database in this tutorial)**
