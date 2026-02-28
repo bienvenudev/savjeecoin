@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { blockchainService } from '../services/blockchainService'
 
 export function TransactionsTable({ transactions }: any) {
 
@@ -25,15 +26,21 @@ export function TransactionsTable({ transactions }: any) {
               <td className="px-4 py-3">{index}</td>
               <td className="px-4 py-3 max-w-25 truncate">
                 {tx.fromAddress ?
-                  <Link className='text-blue-500 hover:text-blue-800 hover:underline' to={`/wallet/${tx.fromAddress}`}>
+                  <Link className='text-blue-500 hover:text-blue-800 hover:underline' to={`/wallet/${tx.toAddress}`}>
                     {tx.fromAddress}
-                  </Link>
-                  : <span className="text-gray-500">System</span>}
+                  </Link> : 'System'}
+                {blockchainService.addressIsFromCurrentUser(tx.fromAddress) && (
+                  <><br /> <small className='text-gray-500'>(That's yours!)</small></>
+                )
+                }
               </td>
               <td className="px-4 py-3 max-w-25 truncate">
                 <Link className='text-blue-500 hover:text-blue-800 hover:underline' to={`/wallet/${tx.toAddress}`}>
                   {tx.toAddress}
                 </Link>
+                {blockchainService.addressIsFromCurrentUser(tx.toAddress) && (
+                  <><br /> <small className='text-gray-500'>(That's yours!)</small></>
+                )}
               </td>
               <td className="px-4 py-3">
                 {tx.amount}
