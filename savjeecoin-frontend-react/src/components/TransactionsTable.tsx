@@ -26,7 +26,7 @@ export function TransactionsTable({ transactions }: any) {
               <td className="px-4 py-3">{index}</td>
               <td className="px-4 py-3 max-w-25 truncate">
                 {tx.fromAddress ?
-                  <Link className='text-blue-500 hover:text-blue-800 hover:underline' to={`/wallet/${tx.toAddress}`}>
+                  <Link className='text-blue-500 hover:text-blue-800 hover:underline' to={`/wallet/${tx.fromAddress}`}>
                     {tx.fromAddress}
                   </Link> : 'System'}
                 {blockchainService.addressIsFromCurrentUser(tx.fromAddress) && (
