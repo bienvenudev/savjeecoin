@@ -21,7 +21,7 @@ export function WalletDetails() {
 
       <h2 className="text-3xl font-bold my-4">Transactions</h2>
       <hr />
-      <TransactionsTable />
+      <TransactionsTable transactions={blockchainService.getAllTransactionsForWallet(walletAddress)} />
     </div>
   )
 }
