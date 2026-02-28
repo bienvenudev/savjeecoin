@@ -28,12 +28,7 @@ class BlockchainService {
   }
 
   createTransaction(newTx) {
-    console.log("here in create tx", newTx);
     this.blockchainInstance.addTransaction(newTx);
-    console.log(
-      "pending transactions array",
-      this.blockchainInstance.pendingTransactions,
-    );
   }
 
   getPendingTransactions() {
@@ -41,7 +36,21 @@ class BlockchainService {
   }
 
   mineTransactions() {
-    this.blockchainInstance.minePendingTransactions(this.walletKeys[0].publicKey);
+    this.blockchainInstance.minePendingTransactions(
+      this.walletKeys[0].publicKey,
+    );
+  }
+
+  getBalanceOfAddress(address) {
+    return this.blockchainInstance.getBalanceOfAddress(address);
+  }
+
+  addressIsFromCurrentUser(address) {
+    return address === this.walletKeys[0].publicKey;
+  }
+
+  getAllTransactionsForWallet(address) {
+    return this.blockchainInstance.getAllTransactionsForWallet(address);
   }
 }
 
